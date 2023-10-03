@@ -27,7 +27,7 @@ export function api<E extends keyof Misskey.Endpoints, P extends Misskey.Endpoin
 		window.fetch(`${apiUrl}/${endpoint}`, {
 			method: 'POST',
 			body: JSON.stringify(data),
-			credentials: 'omit',
+			credentials: 'same-origin',
 			cache: 'no-cache',
 			headers: {
 				'Content-Type': 'application/json',
