@@ -108,7 +108,7 @@ export function apiGet <E extends keyof Misskey.Endpoints, P extends Misskey.End
 		// Send request
 		window.fetch(`${apiUrl}/${endpoint}?${query}`, {
 			method: 'GET',
-			credentials: 'omit',
+			credentials: 'same-origin',
 			cache: 'default',
 		}).then(async (res) => {
 			const body = res.status === 204 ? null : await res.json();
