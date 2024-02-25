@@ -152,8 +152,6 @@ type Option = {
 export class NoteCreateService implements OnApplicationShutdown {
 	#shutdownController = new AbortController();
 
-	public static ContainsProhibitedWordsError = class extends Error {};
-
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -265,7 +263,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', meta.prohibitedWords)) {
-			throw new NoteCreateService.ContainsProhibitedWordsError();
+			throw new IdentifiableError('689ee33f-f97c-479a-ac49-1b9f8140af99', 'Note contains prohibited words');
 		}
 
 		const inSilencedInstance = this.utilityService.isSilencedHost(meta.silencedHosts, user.host);
@@ -360,7 +358,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 			mentionedUsers = data.apMentions ?? await this.extractMentionedUsers(user, combinedTokens);
 		}
 
-		const willCauseNotification = mentionedUsers.filter(u => u.host === null).length > 0 || data.reply?.userHost === null || data.renote?.userHost === null;
+		const willCauseNotification = mentionedUsers.some(u => u.host === null)
+			|| (data.visibility === 'specified' && data.visibleUsers?.some(u => u.host === null))
+			|| data.reply?.userHost === null || (this.isQuote(data) && data.renote?.userHost === null) || false;
 
 		if (process.env.MISSKEY_BLOCK_MENTIONS_FROM_UNFAMILIAR_REMOTE_USERS === 'true' && user.host !== null && willCauseNotification) {
 			const userEntity = await this.usersRepository.findOneBy({ id: user.id });
