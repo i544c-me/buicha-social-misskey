@@ -44,6 +44,24 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<template #label>{{ i18n.ts.keepOriginalUploading }}</template>
 				<template #caption>{{ i18n.ts.keepOriginalUploadingDescription }}</template>
 			</MkSwitch>
+
+			<MkFolder :defaultOpen="true">
+				<template #icon><i class="ti ti-photo"></i></template>
+				<template #label>{{ i18n.ts._imageCompressionMode.title }}</template>
+				<template #caption>{{ i18n.ts._imageCompressionMode.description }}</template>
+
+				<div class="_gaps">
+					<MkSwitch v-model="imageResize">
+						<template #label>{{ i18n.ts._imageCompressionMode.imageResize }}</template>
+						<template #caption>{{ i18n.ts._imageCompressionMode.imageResizeDescription }}</template>
+					</MkSwitch>
+					<MkSwitch v-model="imageCompressionLossy">
+						<template #label>{{ i18n.ts._imageCompressionMode.imageCompressionLossy }}</template>
+						<template #caption>{{ i18n.ts._imageCompressionMode.imageCompressionLossyDescription }}</template>
+					</MkSwitch>
+				</div>
+			</MkFolder>
+
 			<MkSwitch v-model="alwaysMarkNsfw" @update:modelValue="saveProfile()">
 				<template #label>{{ i18n.ts.alwaysMarkSensitive }}</template>
 			</MkSwitch>
@@ -57,7 +75,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import * as Misskey from 'misskey-js';
 import tinycolor from 'tinycolor2';
 import FormLink from '@/components/form/link.vue';
@@ -65,6 +83,7 @@ import MkSwitch from '@/components/MkSwitch.vue';
 import FormSection from '@/components/form/section.vue';
 import MkKeyValue from '@/components/MkKeyValue.vue';
 import FormSplit from '@/components/form/split.vue';
+import MkFolder from '@/components/MkFolder.vue';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import bytes from '@/filters/bytes.js';
@@ -96,6 +115,15 @@ const meterStyle = computed(() => {
 });
 
 const keepOriginalUploading = computed(defaultStore.makeGetterSetter('keepOriginalUploading'));
+const imageCompressionMode = computed(defaultStore.makeGetterSetter('imageCompressionMode'));
+const imageResize = ref(!!imageCompressionMode.value?.startsWith('resize'));
+const imageCompressionLossy = ref(!!imageCompressionMode.value?.endsWith('CompressLossy'));
+
+watch([imageResize, imageCompressionLossy], ([imageResizeValue, imageCompressionLossyValue]) => {
+	const resizeMode: 'resize' | 'noResize' = imageResizeValue ? 'resize' : 'noResize';
+	const compressionMode: 'CompressLossy' | 'Compress' = imageCompressionLossyValue ? 'CompressLossy' : 'Compress';
+	imageCompressionMode.value = resizeMode + compressionMode;
+});
 
 misskeyApi('drive').then(info => {
 	capacity.value = info.capacity;
