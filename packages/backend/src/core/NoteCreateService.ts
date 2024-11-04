@@ -53,6 +53,8 @@ import { FeaturedService } from '@/core/FeaturedService.js';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import type Logger from '@/logger.js';
 import { isReply } from '@/misc/is-reply.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
@@ -148,6 +150,7 @@ type Option = {
 
 @Injectable()
 export class NoteCreateService implements OnApplicationShutdown {
+	private logger: Logger;
 	#shutdownController = new AbortController();
 	private updateNotesCountQueue: CollapsedQueue<MiNote['id'], number>;
 
@@ -220,9 +223,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private instanceChart: InstanceChart,
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
+		private loggerService: LoggerService,
 		private spamFilterService: SpamFilterService,
 	) {
 		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
+		this.logger = this.loggerService.getLogger('note:create');
 	}
 
 	@bindThis
@@ -378,6 +383,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			quote: this.isRenote(data) && this.isQuote(data) ? data.renote : null,
 			user: user,
 		})) {
+			this.logger.error('Request rejected because user has no local followers', { user: user.id, note: data });
 			throw new IdentifiableError('e11b3a16-f543-4885-8eb1-66cad131dbfd', 'Notes including mentions, replies, or renotes from remote users are not allowed until user has at least one local follower.');
 		}
 
