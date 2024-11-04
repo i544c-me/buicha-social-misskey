@@ -57,6 +57,7 @@ import { isReply } from '@/misc/is-reply.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { CollapsedQueue } from '@/misc/collapsed-queue.js';
+import { SpamFilterService } from '@/core/SpamFilterService.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -219,6 +220,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private instanceChart: InstanceChart,
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
+		private spamFilterService: SpamFilterService,
 	) {
 		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
 	}
@@ -368,15 +370,15 @@ export class NoteCreateService implements OnApplicationShutdown {
 		// if the host is media-silenced, custom emojis are not allowed
 		if (this.utilityService.isMediaSilencedHost(this.meta.mediaSilencedHosts, user.host)) emojis = [];
 
-		const willCauseNotification = mentionedUsers.some(u => u.host === null)
-			|| (data.visibility === 'specified' && data.visibleUsers?.some(u => u.host === null))
-			|| data.reply?.userHost === null || (this.isRenote(data) && this.isQuote(data) && data.renote.userHost === null) || false;
-
-		if (process.env.MISSKEY_BLOCK_MENTIONS_FROM_UNFAMILIAR_REMOTE_USERS === 'true' && user.host !== null && willCauseNotification) {
-			const userEntity = await this.usersRepository.findOneBy({ id: user.id });
-			if ((userEntity?.followersCount ?? 0) === 0) {
-				throw new IdentifiableError('e11b3a16-f543-4885-8eb1-66cad131dbfd', 'Notes including mentions, replies, or renotes from remote users are not allowed until user has at least one local follower.');
-			}
+		if (await this.spamFilterService.isSpam({
+			mentionedUsers,
+			visibility: data.visibility,
+			visibleUsers: data.visibleUsers ?? [],
+			reply: data.reply ?? null,
+			quote: this.isRenote(data) && this.isQuote(data) ? data.renote : null,
+			user: user,
+		})) {
+			throw new IdentifiableError('e11b3a16-f543-4885-8eb1-66cad131dbfd', 'Notes including mentions, replies, or renotes from remote users are not allowed until user has at least one local follower.');
 		}
 
 		tags = tags.filter(tag => Array.from(tag).length <= 128).splice(0, 32);
