@@ -153,6 +153,7 @@ import { VmimiRelayTimelineService } from './VmimiRelayTimelineService.js';
 import { QueueModule } from './QueueModule.js';
 import { QueueService } from './QueueService.js';
 import { LoggerService } from './LoggerService.js';
+import { SpamFilterService } from './SpamFilterService.js';
 import type { Provider } from '@nestjs/common';
 
 //#region 文字列ベースでのinjection用(循環参照対応のため)
@@ -454,6 +455,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ApPersonService,
 		ApQuestionService,
 		QueueService,
+		SpamFilterService,
 
 		//#region 文字列ベースでのinjection用(循環参照対応のため)
 		$VmimiRelayTimelineService,
@@ -750,6 +752,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ApPersonService,
 		ApQuestionService,
 		QueueService,
+		SpamFilterService,
 
 		//#region 文字列ベースでのinjection用(循環参照対応のため)
 		$VmimiRelayTimelineService,
