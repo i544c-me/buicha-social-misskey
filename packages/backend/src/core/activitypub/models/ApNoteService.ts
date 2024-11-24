@@ -214,7 +214,7 @@ export class ApNoteService {
 		{
 			// fetch audience information.
 			// this logic may treat followers as direct audience, but it's not a problem for spam check.
-			const noteAudience = await this.apAudienceService.parseAudience(cachedActor, note.to, note.cc, resolver);
+			const noteAudience = await this.apAudienceService.parseAudience(actor ?? null, note.to, note.cc, resolver);
 			let visibility = noteAudience.visibility;
 			const visibleUsers = noteAudience.visibleUsers;
 
@@ -242,13 +242,14 @@ export class ApNoteService {
 				visibleUsers,
 				reply: reply,
 				quote: quote,
-				user: cachedActor,
+				user: actor ?? null,
 			})) {
+				this.logger.error('Request rejected because user has no local followers', { user: uri });
 				throw new IdentifiableError('e11b3a16-f543-4885-8eb1-66cad131dbfd', 'Notes including mentions, replies, or renotes from remote users are not allowed until user has at least one local follower.');
 			}
 		}
-    
-    // eslint-disable-next-line no-param-reassign
+
+		// eslint-disable-next-line no-param-reassign
 		actor ??= await this.apPersonService.resolvePerson(uri, resolver) as MiRemoteUser;
 
 		// 解決した投稿者が凍結されていたらスキップ
