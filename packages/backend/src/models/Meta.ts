@@ -84,6 +84,11 @@ export class MiMeta {
 	@Column('varchar', {
 		length: 1024, array: true, default: '{}',
 	})
+	public prohibitedWordsForNameOfUser: string[];
+
+	@Column('varchar', {
+		length: 1024, array: true, default: '{}',
+	})
 	public silencedHosts: string[];
 
 	@Column('varchar', {
@@ -258,6 +263,11 @@ export class MiMeta {
 	})
 	public turnstileSecretKey: string | null;
 
+	@Column('boolean', {
+		default: false,
+	})
+	public enableTestcaptcha: boolean;
+
 	// chaptcha系を追加した際にはnodeinfoのレスポンスに追加するのを忘れないようにすること
 
 	@Column('enum', {
@@ -357,7 +367,7 @@ export class MiMeta {
 
 	@Column('varchar', {
 		length: 1024,
-		default: 'https://github.com/misskey-dev/misskey',
+		default: 'https://github.com/anatawa12/misskey/tree/vmimi-relay-timeline-releases?tab=readme-ov-file#vmimi-relay-timeline',
 		nullable: true,
 	})
 	public repositoryUrl: string | null;
@@ -518,6 +528,11 @@ export class MiMeta {
 		default: true,
 	})
 	public enableChartsForFederatedInstances: boolean;
+
+	@Column('boolean', {
+		default: true,
+	})
+	public enableStatsForFederatedInstances: boolean;
 
 	@Column('boolean', {
 		default: false,
