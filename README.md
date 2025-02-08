@@ -1,4 +1,8 @@
-# Anatawa12's fork of Misskey
+# buicha-social-misskey
+
+https://buicha.social/ で使用している Misskey のソースコードです。
+
+-----
 
 This is anatawa12's fork of Misskey.
 
