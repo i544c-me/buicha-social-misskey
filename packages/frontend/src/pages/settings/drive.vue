@@ -6,6 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <SearchMarker path="/settings/drive" :label="i18n.ts.drive" :keywords="['drive']" icon="ti ti-cloud">
 	<div class="_gaps_m">
+		<MkFeatureBanner icon="/client-assets/cloud_3d.png" color="#0059ff">
+			<SearchKeyword>{{ i18n.ts._settings.driveBanner }}</SearchKeyword>
+		</MkFeatureBanner>
+
 		<SearchMarker :keywords="['capacity', 'usage']">
 			<FormSection first>
 				<template #label><SearchLabel>{{ i18n.ts.usageAmount }}</SearchLabel></template>
@@ -49,37 +53,34 @@ SPDX-License-Identifier: AGPL-3.0-only
 					{{ i18n.ts.drivecleaner }}
 				</FormLink>
 
-				<SearchMarker :keywords="['keep', 'original', 'raw', 'upload']">
-					<MkSwitch v-model="keepOriginalUploading">
-						<template #label><SearchLabel>{{ i18n.ts.keepOriginalUploading }}</SearchLabel></template>
-						<template #caption><SearchKeyword>{{ i18n.ts.keepOriginalUploadingDescription }}</SearchKeyword></template>
-					</MkSwitch>
-				</SearchMarker>
-
 				<SearchMarker :keywords="['keep', 'original', 'filename']">
-					<MkSwitch v-model="keepOriginalFilename">
-						<template #label><SearchLabel>{{ i18n.ts.keepOriginalFilename }}</SearchLabel></template>
-						<template #caption><SearchKeyword>{{ i18n.ts.keepOriginalFilenameDescription }}</SearchKeyword></template>
-					</MkSwitch>
+					<MkPreferenceContainer k="keepOriginalFilename">
+						<MkSwitch v-model="keepOriginalFilename">
+							<template #label><SearchLabel>{{ i18n.ts.keepOriginalFilename }}</SearchLabel></template>
+							<template #caption><SearchKeyword>{{ i18n.ts.keepOriginalFilenameDescription }}</SearchKeyword></template>
+						</MkSwitch>
+					</MkPreferenceContainer>
 				</SearchMarker>
 
 				<!-- TODO: ここに圧縮のカスタマイズ設定を入れる -->
-				<MkFolder :defaultOpen="true">
-					<template #icon><i class="ti ti-photo"></i></template>
-					<template #label>{{ i18n.ts._imageCompressionMode.title }}</template>
-					<template #caption>{{ i18n.ts._imageCompressionMode.description }}</template>
+				<SearchMarker :keywords="['image', 'compress', 'resize', 'lossly']">
+					<MkFolder :defaultOpen="true">
+						<template #icon><i class="ti ti-photo"></i></template>
+						<template #label><SearchLabel>{{ i18n.ts._imageCompressionMode.title }}</SearchLabel></template>
+						<template #caption><SearchKeyword>{{ i18n.ts._imageCompressionMode.description }}</SearchKeyword></template>
 
-					<div class="_gaps">
-						<MkSwitch v-model="imageResize">
-							<template #label>{{ i18n.ts._imageCompressionMode.imageResize }}</template>
-							<template #caption>{{ i18n.ts._imageCompressionMode.imageResizeDescription }}</template>
-						</MkSwitch>
-						<MkSwitch v-model="imageCompressionLossy">
-							<template #label>{{ i18n.ts._imageCompressionMode.imageCompressionLossy }}</template>
-							<template #caption>{{ i18n.ts._imageCompressionMode.imageCompressionLossyDescription }}</template>
-						</MkSwitch>
-					</div>
-				</MkFolder>
+						<div class="_gaps">
+							<MkSwitch v-model="imageResize">
+								<template #label>{{ i18n.ts._imageCompressionMode.imageResize }}</template>
+								<template #caption>{{ i18n.ts._imageCompressionMode.imageResizeDescription }}</template>
+							</MkSwitch>
+							<MkSwitch v-model="imageCompressionLossy">
+								<template #label>{{ i18n.ts._imageCompressionMode.imageCompressionLossy }}</template>
+								<template #caption>{{ i18n.ts._imageCompressionMode.imageCompressionLossyDescription }}</template>
+							</MkSwitch>
+						</div>
+					</MkFolder>
+				</SearchMarker>
 
 				<SearchMarker :keywords="['always', 'default', 'mark', 'nsfw', 'sensitive', 'media', 'file']">
 					<MkSwitch v-model="alwaysMarkNsfw" @update:modelValue="saveProfile()">
@@ -110,15 +111,17 @@ import MkKeyValue from '@/components/MkKeyValue.vue';
 import FormSplit from '@/components/form/split.vue';
 import MkFolder from '@/components/MkFolder.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { misskeyApi } from '@/utility/misskey-api.js';
 import bytes from '@/filters/bytes.js';
-import { defaultStore } from '@/store.js';
 import MkChart from '@/components/MkChart.vue';
 import { i18n } from '@/i18n.js';
-import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { signinRequired } from '@/account.js';
+import { definePage } from '@/page.js';
+import { ensureSignin } from '@/i.js';
+import { prefer } from '@/preferences.js';
+import MkPreferenceContainer from '@/components/MkPreferenceContainer.vue';
+import MkFeatureBanner from '@/components/MkFeatureBanner.vue';
 
-const $i = signinRequired();
+const $i = ensureSignin();
 
 const fetching = ref(true);
 const usage = ref<number | null>(null);
@@ -139,9 +142,8 @@ const meterStyle = computed(() => {
 	};
 });
 
-const keepOriginalUploading = computed(defaultStore.makeGetterSetter('keepOriginalUploading'));
-const keepOriginalFilename = computed(defaultStore.makeGetterSetter('keepOriginalFilename'));
-const imageCompressionMode = computed(defaultStore.makeGetterSetter('imageCompressionMode'));
+const keepOriginalFilename = prefer.model('keepOriginalFilename');
+const imageCompressionMode = prefer.model('imageCompressionMode');
 const imageResize = ref(!!imageCompressionMode.value.startsWith('resize'));
 const imageCompressionLossy = ref(!!imageCompressionMode.value.endsWith('CompressLossy'));
 
@@ -157,9 +159,9 @@ misskeyApi('drive').then(info => {
 	fetching.value = false;
 });
 
-if (defaultStore.state.uploadFolder) {
+if (prefer.s.uploadFolder) {
 	misskeyApi('drive/folders/show', {
-		folderId: defaultStore.state.uploadFolder,
+		folderId: prefer.s.uploadFolder,
 	}).then(response => {
 		uploadFolder.value = response;
 	});
@@ -167,11 +169,11 @@ if (defaultStore.state.uploadFolder) {
 
 function chooseUploadFolder() {
 	os.selectDriveFolder(false).then(async folder => {
-		defaultStore.set('uploadFolder', folder[0] ? folder[0].id : null);
+		prefer.commit('uploadFolder', folder[0] ? folder[0].id : null);
 		os.success();
-		if (defaultStore.state.uploadFolder) {
+		if (prefer.s.uploadFolder) {
 			uploadFolder.value = await misskeyApi('drive/folders/show', {
-				folderId: defaultStore.state.uploadFolder,
+				folderId: prefer.s.uploadFolder,
 			});
 		} else {
 			uploadFolder.value = null;
@@ -197,7 +199,7 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePage(() => ({
 	title: i18n.ts.drive,
 	icon: 'ti ti-cloud',
 }));
