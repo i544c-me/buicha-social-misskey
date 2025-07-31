@@ -39,6 +39,7 @@ import type { PageMetadata } from '@/page.js';
 import XMobileFooterMenu from '@/ui/_common_/mobile-footer-menu.vue';
 import XPreferenceRestore from '@/ui/_common_/PreferenceRestore.vue';
 import XTitlebar from '@/ui/_common_/titlebar.vue';
+import XSidebar from '@/ui/_common_/navbar.vue';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
 import { $i } from '@/i.js';
@@ -51,7 +52,6 @@ import { shouldSuggestRestoreBackup } from '@/preferences/utility.js';
 import { DI } from '@/di.js';
 
 const XWidgets = defineAsyncComponent(() => import('./_common_/widgets.vue'));
-const XSidebar = defineAsyncComponent(() => import('@/ui/_common_/navbar.vue'));
 const XStatusBars = defineAsyncComponent(() => import('@/ui/_common_/statusbars.vue'));
 const XAnnouncements = defineAsyncComponent(() => import('@/ui/_common_/announcements.vue'));
 
@@ -126,7 +126,6 @@ const onContextmenu = (ev) => {
 </script>
 
 <style lang="scss" module>
-$ui-font-size: 1em; // TODO: どこかに集約したい
 $widgets-hide-threshold: 1090px;
 
 .root {
