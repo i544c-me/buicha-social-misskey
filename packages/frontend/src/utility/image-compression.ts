@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
 
 export const imageCompressionTargetSizes = [
 	1125, // original misskey compression mode = 3 (high)
