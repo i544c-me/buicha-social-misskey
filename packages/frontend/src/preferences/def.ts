@@ -371,6 +371,9 @@ export const PREF_DEF = definePreferences({
 	imageCompressionMode: {
 		default: 'noResizeCompress' as 'resizeCompress' | 'noResizeCompress' | 'resizeCompressLossy' | 'noResizeCompressLossy',
 	},
+	imageResizeSize: {
+		default: 2560,
+	},
 	keepOriginalFilename: {
 		default: true,
 	},
