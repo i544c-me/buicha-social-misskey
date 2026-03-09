@@ -60,7 +60,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, useTemplateRef } from 'vue';
 import * as Misskey from 'misskey-js';
 import MkWindow from '@/components/MkWindow.vue';
 import MkButton from '@/components/MkButton.vue';
@@ -78,7 +78,7 @@ import { ensureSignin } from '@/i.js';
 const $i = ensureSignin();
 
 const props = defineProps<{
-	avatarDecoration?: any,
+	avatarDecoration?: Misskey.entities.AdminAvatarDecorationsListResponse[number],
 }>();
 
 const emit = defineEmits<{
@@ -86,7 +86,7 @@ const emit = defineEmits<{
 	(ev: 'closed'): void
 }>();
 
-const windowEl = ref<InstanceType<typeof MkWindow> | null>(null);
+const windowEl = useTemplateRef('windowEl');
 const url = ref<string>(props.avatarDecoration ? props.avatarDecoration.url : '');
 const name = ref<string>(props.avatarDecoration ? props.avatarDecoration.name : '');
 const description = ref<string>(props.avatarDecoration ? props.avatarDecoration.description : '');
@@ -101,15 +101,15 @@ async function addRole() {
 	const roles = await misskeyApi('admin/roles/list');
 	const currentRoleIds = rolesThatCanBeUsedThisDecoration.value.map(x => x.id);
 
-	const { canceled, result: role } = await os.select({
-		items: roles.filter(r => r.isPublic).filter(r => !currentRoleIds.includes(r.id)).map(r => ({ text: r.name, value: r })),
+	const { canceled, result: roleId } = await os.select({
+		items: roles.filter(r => r.isPublic).filter(r => !currentRoleIds.includes(r.id)).map(r => ({ label: r.name, value: r.id })),
 	});
-	if (canceled || role == null) return;
+	if (canceled || roleId == null) return;
 
-	rolesThatCanBeUsedThisDecoration.value.push(role);
+	rolesThatCanBeUsedThisDecoration.value.push(roles.find(r => r.id === roleId)!);
 }
 
-async function removeRole(role, ev) {
+async function removeRole(role: Misskey.entities.Role, ev: PointerEvent) {
 	rolesThatCanBeUsedThisDecoration.value = rolesThatCanBeUsedThisDecoration.value.filter(x => x.id !== role.id);
 }
 
@@ -147,6 +147,8 @@ async function done() {
 }
 
 async function del() {
+	if (props.avatarDecoration == null) return;
+
 	const { canceled } = await os.confirm({
 		type: 'warning',
 		text: i18n.tsx.removeAreYouSure({ x: name.value }),
