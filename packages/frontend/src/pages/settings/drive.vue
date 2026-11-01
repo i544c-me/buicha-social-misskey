@@ -120,6 +120,7 @@ import { ensureSignin } from '@/i.js';
 import { prefer } from '@/preferences.js';
 import MkPreferenceContainer from '@/components/MkPreferenceContainer.vue';
 import MkFeatureBanner from '@/components/MkFeatureBanner.vue';
+import { selectDriveFolder } from '@/utility/drive.js';
 
 const $i = ensureSignin();
 
@@ -168,7 +169,7 @@ if (prefer.s.uploadFolder) {
 }
 
 function chooseUploadFolder() {
-	os.selectDriveFolder(false).then(async folder => {
+	selectDriveFolder(null).then(async folder => {
 		prefer.commit('uploadFolder', folder[0] ? folder[0].id : null);
 		os.success();
 		if (prefer.s.uploadFolder) {
